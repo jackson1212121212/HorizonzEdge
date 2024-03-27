@@ -1,0 +1,130 @@
+# HorizonEdge: Advanced Chatbot and Assistant with Machine Learning
+
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, StratifiedKFold
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, plot_confusion_matrix
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.pipeline import Pipeline
+import joblib
+
+# Initialize NLTK resources
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+# Load the dataset
+def load_dataset():
+    # Load a larger and diverse dataset (e.g., from Kaggle)
+    data = pd.read_csv('path_to_your_dataset.csv')
+    return data
+
+# Preprocess the data
+def preprocess_data(data):
+    # Split features and target variable
+    X = data.drop(columns=['target_column'])
+    y = data['target_column']
+    
+    # Split the dataset into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    
+    # Define numerical and categorical features
+    numerical_features = ['numerical_feature_1', 'numerical_feature_2']
+    categorical_features = ['categorical_feature_1', 'categorical_feature_2']
+    
+    # Create preprocessing pipeline for numerical features
+    numerical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='mean')),
+        ('scaler', StandardScaler())
+    ])
+    
+    # Create preprocessing pipeline for categorical features
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='most_frequent')),
+        ('onehot', OneHotEncoder(handle_unknown='ignore'))
+    ])
+    
+    # Combine preprocessing pipelines
+    preprocessor = ColumnTransformer(transformers=[
+        ('num', numerical_transformer, numerical_features),
+        ('cat', categorical_transformer, categorical_features)
+    ])
+    
+    return preprocessor, X_train, X_test, y_train, y_test
+
+# Train the model
+def train_model(X_train, y_train):
+    # Initialize and train a Gradient Boosting classifier with optimized hyperparameters
+    param_grid = {'n_estimators': [100, 200, 300], 'learning_rate': [0.05, 0.1, 0.2]}
+    gbc_classifier = GradientBoostingClassifier(random_state=42)
+    grid_search = GridSearchCV(gbc_classifier, param_grid, cv=5, scoring='accuracy')
+    grid_search.fit(X_train, y_train)
+    best_gbc_classifier = grid_search.best_estimator_
+    return best_gbc_classifier
+
+# Evaluate the model
+def evaluate_model(model, X_test, y_test):
+    # Make predictions on the testing set
+    y_pred = model.predict(X_test)
+    
+    # Calculate accuracy
+    accuracy = accuracy_score(y_test, y_pred)
+    print("Accuracy:", accuracy)
+    
+    # Generate classification report
+    report = classification_report(y_test, y_pred)
+    print("Classification Report:\n", report)
+    
+    # Plot confusion matrix
+    plot_confusion_matrix(model, X_test, y_test, cmap=plt.cm.Blues)
+    plt.title("Confusion Matrix")
+    plt.show()
+
+# Perform cross-validation
+def perform_cross_validation(model, X_train, y_train):
+    # Perform 5-fold cross-validation with stratified folds
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv_scores = cross_val_score(model, X_train, y_train, cv=cv, scoring='accuracy')
+    print("Cross-validation scores:", cv_scores)
+    print("Mean CV Accuracy:", np.mean(cv_scores))
+
+# Initialize chatbot
+def initialize_chatbot():
+    print("Welcome! I'm your HorizonEdge assistant. How can I assist you today?")
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == 'exit':
+            print("Goodbye! Have a great day!")
+            break
+        else:
+            response = get_response(user_input)
+            print("HorizonEdge: ", response)
+
+# Get response from chatbot
+def get_response(user_input):
+    # Perform NLP preprocessing
+    preprocessed_input = preprocess_input(user_input)
+    
+    # Use machine learning model to generate response
+    response = model.predict([preprocessed_input])
+    
+    return response
+
+# Preprocess user input
+def preprocess_input(user_input):
+    # Tokenize input text
+    tokens = nltk.word_tokenize(user_input)
+    
+    # Remove stopwords and lemmatize tokens
+    stop_words = set(stopwords.words('english'))
+    lemmatizer = WordNetLemmatizer()
+    preprocessed_tokens = [lemmatizer.lemmat
